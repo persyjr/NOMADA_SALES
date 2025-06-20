@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos</title>
+    {% load static %}
+    {% load crispy_forms_tags %} {# Para Crispy Forms #}
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.png' %}" />
+    <!-- JQUERY -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <!-- BOOTSTRAP 4 CSS (usando el mismo que propusiste) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- FONT AWESOME -->
+    <script data-search-pseudo-elements defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" integrity="sha384-ujbKXb9V3HdK7jcWL6kHL1c+2Lj4MR4Gkjl7UtwpSHg/ClpViddK9TI7yU53frPN" crossorigin="anonymous"></script>
+    
+    <style>
+        body {
+            padding-top: 20px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        /* Estilos básicos para Django Forms si no usas crispy o para personalizar */
+        form p {
+            margin-bottom: 1rem;
+        }
+        form label {
+            display: block;
+            margin-bottom: .5rem;
+            font-weight: bold;
+        }
+        form input[type="text"],
+        form input[type="number"],
+        form textarea,
+        form select {
+            width: 100%;
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        }
+        form input[type="file"] {
+            display: block;
+        }
+        .errorlist {
+            color: red;
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: .25rem;
+            font-size: .875em;
+        }
+        #currentPhotoInfo img {
+            max-width: 100px;
+            height: auto;
+            display: block;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0,0,0,.2);
+        }
+    </style>
+</head>
+<body class="container">
+    <div class="row d-flex justify-content-center">
+        <div class="card w-75">
+            <div class="card-header text-center h2" style="color: blue" id="formTitle">Crear Nuevo Producto</div>
+            <div class="card-body">
+                <form id="formulario" method="POST" action="{% url 'productos:guardar_producto' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {# Campo oculto para el ID del producto al editar #}
+                    <input type="hidden" id="id_producto_oculto" name="id_producto_oculto">
+                    
+                    {# Aquí se renderiza el formulario de Django #}
+                    {# Usamos un div para poder reemplazar su contenido con AJAX #}
+                    <div id="django-form-fields">
+                        {{ form|crispy }} {# Renderiza el formulario con crispy-forms #}
+                    </div>
+                    
+                    {# Información de la foto actual (para edición) #}
+                    <div class="form-group">
+                        <small class="form-text text-muted mb-2" id="currentPhotoInfo"></small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary form-control mt-3" id="submitButton">Guardar Producto</button>
+                    <button type="button" class="btn btn-secondary form-control mt-2" id="cancelEditButton" style="display: none;">Cancelar Edición</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row d-flex justify-content-center">
+        <div class="card w-100">
+            <h2 class="card-header w-100 d-flex justify-content-center">Listado de Productos:</h2>
+            <div class="card-body table-responsive">
+                <table class="table table-striped table-hover table-primary">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Foto</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>P. Sug. Compra</th>
+                            <th>P. Sug. Venta</th>
+                            <th>Categoría</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-datos">
+                        {# Esta sección se llena inicialmente por Django y se actualiza via AJAX #}
+                        {% include 'productos/includes/product_table_rows.html' %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOOTSTRAP 4 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+
+<script>
+    // Función para obtener el token CSRF (adaptada para jQuery)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Función para restablecer el formulario (reemplazando el HTML)
+    function resetForm(formHtml) {
+        $('#django-form-fields').html(formHtml); // Reemplaza los campos del formulario con el HTML limpio
+        $('#id_producto_oculto').val(''); // Limpia el ID oculto
+        $('#formTitle').text('Crear Nuevo Producto');
+        $('#submitButton').text('Guardar Producto');
+        $('#cancelEditButton').hide();
+        $('#currentPhotoInfo').html(''); // Limpiar info de foto actual
+    }
+
+    $(document).ready(function() {
+        // Almacenar el HTML inicial del formulario para poder reiniciarlo
+        const initialFormHtml = $('#django-form-fields').html();
+        resetForm(initialFormHtml); // Asegurarse de que el formulario esté limpio al cargar
+
+        // Manejo del envío del formulario (Crear/Actualizar)
+        $('#formulario').submit(function(event) {
+            event.preventDefault(); // Prevenir el envío tradicional
+
+            const formData = new FormData(this); // jQuery usa 'this' para el form
+            // 'id_producto_oculto' ya está en formData porque es un input del form.
+
+            $.ajax({
+                url: '{% url "productos:guardar_producto" %}', // URL de la vista Django para guardar
+                type: 'POST',
+                data: formData,
+                processData: false, // Importante: No procesar los datos (para FormData)
+                contentType: false, // Importante: No establecer el tipo de contenido (para FormData)
+                headers: {
+                    'X-CSRFToken': csrftoken // Envía el token CSRF en los headers
+                },
+                success: function(response) {
+                    // Si el backend responde con éxito
+                    $('#tabla-datos').html(response.table_rows); // Actualiza solo el tbody de la tabla
+                    resetForm(response.form_html); // Reinicia el formulario con el HTML proporcionado por el backend
+                    alert('Producto guardado con éxito!');
+                },
+                error: function(xhr) {
+                    // Si el backend responde con errores (ej. 400 Bad Request)
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.form_html) {
+                        $('#django-form-fields').html(response.form_html); // Muestra el formulario con los errores
+                    }
+                    // Puedes mostrar los errores de forma más específica si quieres,
+                    // response.errors contiene los errores en JSON.
+                    alert('Error al guardar producto. Revise el formulario.');
+                    console.error('Errores:', response.errors);
+                }
+            });
+        });
+
+        // Manejo del botón de cancelar edición
+        $('#cancelEditButton').on('click', function() {
+            resetForm(initialFormHtml); // Restaura el formulario a su estado inicial (vacío)
+        });
+    });
+
+    // Función para eliminar un producto
+    function eliminarProducto(id) {
+        if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+            $.ajax({
+                url: '/productos/eliminar/' + id + '/', // URL de la vista Django para eliminar
+                type: 'POST', // Usamos POST para acciones destructivas con CSRF
+                data: {
+                    csrfmiddlewaretoken: csrftoken // Envía el token CSRF
+                },
+                success: function(response) {
+                    $('#tabla-datos').html(response.table_rows); // Actualiza el tbody
+                    resetForm(response.form_html); // Reinicia el formulario
+                    alert('Producto eliminado con éxito!');
+                },
+                error: function(xhr) {
+                    const response = JSON.parse(xhr.responseText);
+                    alert('Error al eliminar producto: ' + (response.error || 'Desconocido'));
+                    console.error('Error al eliminar:', response);
+                }
+            });
+        }
+    }
+
+    // Función para editar un producto (cargar datos en el formulario)
+    function editarProducto(id) {
+        $.ajax({
+            url: '/productos/editar/' + id + '/', // URL de la vista Django para editar
+            type: 'GET', // Usamos GET para obtener los datos
+            headers: {
+                'X-CSRFToken': csrftoken // Aunque es GET, buena práctica incluirlo
+            },
+            success: function(response) {
+                // Reemplaza el HTML del formulario con la versión prellenada
+                $('#django-form-fields').html(response.form_html);
+                $('#id_producto_oculto').val(response.id); // Establece el ID oculto para la actualización
+
+                // Actualiza el título del formulario
+                $('#formTitle').text(`Editar Producto: ${response.nombre}`);
+                $('#submitButton').text('Actualizar Producto');
+                $('#cancelEditButton').show(); // Muestra el botón de cancelar
+
+                // Manejo especial para la foto actual (mostrar la imagen)
+                if (response.foto_url) {
+                    const photoName = response.foto_url.split('/').pop();
+                    $('#currentPhotoInfo').html(`Foto actual: <a href="${response.foto_url}" target="_blank">${photoName}</a><br><img src="${response.foto_url}" alt="Foto actual">`);
+                } else {
+                    $('#currentPhotoInfo').text('No hay foto actual.');
+                }
+                
+                // Desplazarse al formulario para que el usuario lo vea
+                $('html, body').animate({
+                    scrollTop: $('#formulario').offset().top
+                }, 500);
+            },
+            error: function(xhr) {
+                const response = JSON.parse(xhr.responseText);
+                alert('Error al cargar producto para edición: ' + (response.error || 'Desconocido'));
+                console.error('Error al cargar para edición:', response);
+            }
+        });
+    }
+</script>
+</body>
+</html>

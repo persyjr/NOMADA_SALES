@@ -1,0 +1,91 @@
+{% load static %}
+{% load crispy_forms_tags %}
+<html>
+<head>
+    <title>Lista de Productos</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.png' %}" />
+    <!-- JQUERY -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <!-- FONT AWESOME -->
+    <script data-search-pseudo-elements defer src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" integrity="sha384-ujbKXb9V3HdK7jcWL6kHL1c+2Lj4MR4Gkjl7UtwpSHg/ClpViddK9TI7yU53frPN" crossorigin="anonymous"></script>
+    
+</head>
+<body class=" container">
+    <div class=" row d-flex justify-content-center">
+        <div class=" card w-50">
+            <div class="h2 text-center w-100" style="color: blue">Formulario</div>
+            <form id="formulario" method="POST"
+            {% if form2 is not None %}
+             action="{% url 'contabilidad:editar_producto' object.id %}"
+                enctype="multipart/form-data"
+                {% else %} 
+             action="{% url 'contabilidad:crear_producto' %}"
+                enctype="multipart/form-data"
+                {% endif %}
+                  
+             class="form-control  ">
+                    {% csrf_token %}
+                    {% if form2 is not None %}
+                    <div class="h2"> form 2</div>
+                    {{ form2|crispy }}
+                    {% else %}
+                    <div class="h2"> form 1</div>
+                    {{ form|crispy }}
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary w-100">
+                        submit
+                    </button>
+                    
+            </form>
+        </div>
+    </div>
+    <div class=" row d-flex justify-content-center">
+        <div class=" card w-100">
+            <h2 class="w-100 d-flex justify-content-center">Datos:</h2>
+            <table class="table w-100 table-primary ">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>descripcion</th>
+                        <th>Foto</th>
+                        <th>stock</th>
+                        <th>precio compra</th>
+                        <th>precio venta</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-datos">
+                    {% for producto in productos %}
+                    <tr>
+                        <td>{{ producto.nombre }}</td>
+                        <td>{{ producto.descripcion }}</td>
+                        <td>
+                            {% if producto.foto %}
+                            <img src="{{ producto.foto.url }}" alt="Foto del producto" style="width: 50px; height: 50px;">
+                            {% else %}
+                            No hay foto
+                            {% endif %}
+                        </td>
+                        <td>{{ producto.stock }}</td>
+                        <td>{{ producto.precio_sugerido_compra }}</td>
+                        <td>{{ producto.precio_sugerido_venta }}</td>
+                        <td>
+                           
+                            <a class="btn btn-primary" href="{% url 'contabilidad:editar_producto' producto.id %}"> Editar</a>
+                            <form action="{% url 'contabilidad:eliminar_producto' producto.id %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que quieres eliminar este producto?');">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
