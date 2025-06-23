@@ -37,7 +37,8 @@ class Crear_producto(generic.FormView):
             precio_sugerido_compra=precio_sugerido_compra,
             precio_sugerido_venta=precio_sugerido_venta,
             categoria=categoria,
-            creado_por=self.request.user)
+            #creado_por=self.request.user
+            )
         producto.save()
         return HttpResponseRedirect(reverse_lazy('contabilidad:crear_producto'))
     
@@ -78,7 +79,7 @@ class editar_producto(generic.UpdateView):
         producto.precio_sugerido_compra = precio_sugerido_compra
         producto.precio_sugerido_venta = precio_sugerido_venta
         producto.categoria = categoria
-        producto.creado_por = self.request.user
+        #producto.creado_por = self.request.user
         producto.save()
         return HttpResponseRedirect(reverse_lazy('contabilidad:crear_producto'))
     
@@ -108,7 +109,7 @@ class delete_producto(generic.DeleteView):
         producto = self.get_object()
         producto.delete()
         return HttpResponseRedirect(self.success_url)
-
+"""
 class listar_productos(generic.TemplateView):
     model = m.Producto
     template_name = 'producto_list.html'
@@ -122,3 +123,4 @@ class listar_productos(generic.TemplateView):
         return super().get_context_data(**kwargs)
     def get_form(self):
         return self.form_class(self.request.POST or None, self.request.FILES or None)
+"""

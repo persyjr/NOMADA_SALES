@@ -17,7 +17,7 @@
 <body class=" container">
     <div class=" row d-flex justify-content-center">
         <div class=" card w-50">
-            <div class="h2 text-center w-100" style="color: blue">Formulario</div>
+            <div class="h2 text-center w-100" style="color: blue">GESTIÓN DE PRODUCTOS</div>
             <form id="formulario" method="POST"
             {% if form2 is not None %}
              action="{% url 'contabilidad:editar_producto' object.id %}"
@@ -30,10 +30,10 @@
              class="form-control  ">
                     {% csrf_token %}
                     {% if form2 is not None %}
-                    <div class="h2"> form 2</div>
+                    <div class="h2 d-flex justify-content-center"> ACTUALIZACIÓN DE PRODUCTO</div>
                     {{ form2|crispy }}
                     {% else %}
-                    <div class="h2"> form 1</div>
+                    <div class="h2 d-flex justify-content-center"> CREACION DE PRODUCTO</div>
                     {{ form|crispy }}
                     {% endif %}
                     <button type="submit" class="btn btn-primary w-100">
@@ -50,11 +50,14 @@
                 <thead class="table-primary">
                     <tr>
                         <th>Nombre</th>
-                        <th>descripcion</th>
+                        <th>Descripción</th>
+                        <th>Categoría</th>
                         <th>Foto</th>
-                        <th>stock</th>
-                        <th>precio compra</th>
-                        <th>precio venta</th>
+                        <th>Stock</th>
+                        <th>Precio Actual de Venta</th>
+                        <th>Precio Compra</th>
+                        <th>Precio Sugerido Venta</th>
+                        <th>Creado por</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -63,6 +66,7 @@
                     <tr>
                         <td>{{ producto.nombre }}</td>
                         <td>{{ producto.descripcion }}</td>
+                        <td>{{ producto.categoria }}</td>
                         <td>
                             {% if producto.foto %}
                             <img src="{{ producto.foto.url }}" alt="Foto del producto" style="width: 50px; height: 50px;">
@@ -71,8 +75,10 @@
                             {% endif %}
                         </td>
                         <td>{{ producto.stock }}</td>
+                        <td>{{ producto.precio }}</td>
                         <td>{{ producto.precio_sugerido_compra }}</td>
                         <td>{{ producto.precio_sugerido_venta }}</td>
+                        <td>{{ producto.creado_por }}</td>
                         <td>
                            
                             <a class="btn btn-primary" href="{% url 'contabilidad:editar_producto' producto.id %}"> Editar</a>
